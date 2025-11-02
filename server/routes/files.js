@@ -7,7 +7,9 @@ const path = require('path');
 require('dotenv').config();
 
 const router = express.Router();
-const db = new sqlite3.Database(process.env.DB_PATH);
+// Use absolute path for database to ensure it works correctly
+// Use the same database instance from init.js to avoid multiple connections
+const { db } = require('../database/init');
 
 // Multer config
 const storage = multer.diskStorage({
@@ -19,7 +21,9 @@ const upload = multer({ storage });
 
 // JWT middleware
 function authenticateToken(req, res, next) {
-  const token = req.headers['authorization'];
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Extract token from "Bearer <token>"
+  
   if (!token) return res.status(401).json({ error: 'No token provided' });
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
